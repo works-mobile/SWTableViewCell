@@ -84,6 +84,10 @@ static NSString * const kTableViewCellContentView = @"UITableViewCellContentView
     self.cellScrollView.showsHorizontalScrollIndicator = NO;
     self.cellScrollView.scrollsToTop = NO;
     self.cellScrollView.scrollEnabled = YES;
+
+    if (@available(iOS 11.0, *)) {
+        self.cellScrollView.contentInsetAdjustmentBehavior = UIScrollViewContentInsetAdjustmentNever;
+    }
     
     _contentCellView = [[UIView alloc] init];
     [self.cellScrollView addSubview:_contentCellView];
@@ -166,6 +170,12 @@ static NSString * const kTableViewCellContentView = @"UITableViewCellContentView
                                ]];
         
         [clipView addSubview:buttonView];
+
+        UIView *constrainBaseView = self.contentView;
+        if (@available(iOS 11.0, *)) {
+            constrainBaseView = self;
+        }
+
         [self addConstraints:@[
                                // Pin the button view to the appropriate outer edges of its clipping view.
                                [NSLayoutConstraint constraintWithItem:buttonView attribute:NSLayoutAttributeTop relatedBy:NSLayoutRelationEqual toItem:clipView attribute:NSLayoutAttributeTop multiplier:1.0 constant:0.0],
@@ -173,7 +183,7 @@ static NSString * const kTableViewCellContentView = @"UITableViewCellContentView
                                [NSLayoutConstraint constraintWithItem:buttonView attribute:alignmentAttribute relatedBy:NSLayoutRelationEqual toItem:clipView attribute:alignmentAttribute multiplier:1.0 constant:0.0],
                                
                                // Constrain the maximum button width so that at least a button's worth of contentView is left visible. (The button view will shrink accordingly.)
-                               [NSLayoutConstraint constraintWithItem:buttonView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationLessThanOrEqual toItem:self.contentView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:-kUtilityButtonWidthDefault],
+                               [NSLayoutConstraint constraintWithItem:buttonView attribute:NSLayoutAttributeWidth relatedBy:NSLayoutRelationLessThanOrEqual toItem:constrainBaseView attribute:NSLayoutAttributeWidth multiplier:1.0 constant:-kUtilityButtonWidthDefault],
                                ]];
     }
 }
@@ -603,6 +613,10 @@ static NSString * const kTableViewPanState = @"state";
         // Update the clipping on the utility button views according to the current position.
         CGRect frame = [self.contentView.superview convertRect:self.contentView.frame toView:self];
         frame.size.width = CGRectGetWidth(self.frame);
+
+        if (@available(iOS 11.0, *)) {
+            frame.size.width -= (self.safeAreaInsets.right);
+        }
         
         self.leftUtilityClipConstraint.constant = MAX(0, CGRectGetMinX(frame) - CGRectGetMinX(self.frame));
         self.rightUtilityClipConstraint.constant = MIN(0, CGRectGetMaxX(frame) - CGRectGetMaxX(self.frame));
